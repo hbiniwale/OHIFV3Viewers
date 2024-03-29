@@ -20,9 +20,11 @@ import { StackViewportData, VolumeViewportData } from '../../types/CornerstoneCa
 import { Presentation, Presentations } from '../../types/Presentation';
 
 import JumpPresets from '../../utils/JumpPresets';
+import { int } from '@kitware/vtk.js/types';
 
 const EVENTS = {
   VIEWPORT_DATA_CHANGED: 'event::cornerstoneViewportService:viewportDataChanged',
+  VIEWPORT_SLIDER_DATA_CHANGED: 'event::cornerstoneViewportService:viewportSliderDataChanged',
 };
 
 /**
@@ -149,6 +151,7 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
     }
   }
 
+  // HCB : TODO : Check if this function gets you the index of image
   public getPresentation(viewportId: string): Presentation {
     const viewportInfo = this.viewportsById.get(viewportId);
     if (!viewportInfo) {
@@ -316,6 +319,7 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
     // The broadcast event here ensures that listeners have a valid, up to date
     // viewport to access.  Doing it too early can result in exceptions or
     // invalid data.
+    // HCB : TODO
     displaySetPromise.then(() => {
       this._broadcastEvent(this.EVENTS.VIEWPORT_DATA_CHANGED, {
         viewportData,
@@ -825,6 +829,14 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
         viewportInfo.contains(displaySetInstanceUID, referencedImageId)
       )?.viewportId ?? null
     );
+  }
+
+  public SliderIndexChanged(imageIndex : int, viewportData: StackViewportData | VolumeViewportData) {
+    console.log("HCB : CornerstoneViewportService->SliderIndexChanged : ->" + imageIndex);
+    //console.log("HCB : CornerstoneViewportService->SliderIndexChanged : ->" + JSON.stringify(viewportData));
+    this._broadcastEvent(this.EVENTS.VIEWPORT_SLIDER_DATA_CHANGED, {
+      imageIndex,viewportData
+    });
   }
 }
 

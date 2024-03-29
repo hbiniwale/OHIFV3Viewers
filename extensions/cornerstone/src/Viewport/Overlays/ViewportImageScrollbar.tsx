@@ -17,8 +17,9 @@ function CornerstoneImageScrollbar({
   const { cineService, cornerstoneViewportService } = (servicesManager as ServicesManger).services;
 
   const onImageScrollbarChange = (imageIndex, viewportId) => {
+    console.log("HCB : CornerstoneImageScrollbar");
     const viewport = cornerstoneViewportService.getCornerstoneViewport(viewportId);
-
+    console.log("HCB : CornerstoneImageScrollbar");
     const { isCineEnabled } = cineService.getState();
 
     if (isCineEnabled) {
@@ -75,12 +76,16 @@ function CornerstoneImageScrollbar({
     }
 
     const updateStackIndex = event => {
+      
       const { newImageIdIndex } = event.detail;
+      console.log("HCB : CornerstoneImageScrollbar->updateStackIndex : ->" + newImageIdIndex);
       // find the index of imageId in the imageIds
       setImageSliceData({
         imageIndex: newImageIdIndex,
         numberOfSlices: viewportData.data.imageIds.length,
       });
+      //HCB : New Code Added for the index changed
+      cornerstoneViewportService.SliderIndexChanged(newImageIdIndex,viewportData);
     };
 
     element.addEventListener(Enums.Events.STACK_VIEWPORT_SCROLL, updateStackIndex);

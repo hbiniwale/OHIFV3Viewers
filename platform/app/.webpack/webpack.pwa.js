@@ -69,6 +69,10 @@ module.exports = (env, argv) => {
         // Hoisted Yarn Workspace Modules
         path.resolve(__dirname, '../../../node_modules'),
         SRC_DIR,
+        path.resolve(
+          __dirname,
+          '/Users/biniwalh/PROJECT/SourceCode/OHIFV3Viewer/CustomDevlopment/Modes/hcb-mode/node_modules'
+        ),
       ],
     },
     plugins: [

@@ -87,7 +87,7 @@ function InstanceNumberOverlayItem({
       className="overlay-item flex flex-row"
       style={{ color: (customization && customization.color) || undefined }}
     >
-      <span className="mr-1 shrink-0">I:</span>
+      <span className="mr-1 shrink-0">HCB:</span>
       <span className="font-light">
         {instanceNumber !== undefined && instanceNumber !== null
           ? `${instanceNumber} (${imageIndex + 1}/${numberOfSlices})`

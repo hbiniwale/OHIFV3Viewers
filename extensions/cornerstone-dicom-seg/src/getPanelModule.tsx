@@ -3,6 +3,7 @@ import React from 'react';
 import { useAppConfig } from '@state';
 import PanelSegmentation from './panels/PanelSegmentation';
 import SegmentationToolbox from './panels/SegmentationToolbox';
+import PanelForm from './panels/PanelForm';
 
 const getPanelModule = ({ commandsManager, servicesManager, extensionManager, configuration }) => {
   const { customizationService } = servicesManager.services;
@@ -38,6 +39,15 @@ const getPanelModule = ({ commandsManager, servicesManager, extensionManager, co
           }}
         />
         <PanelSegmentation
+          commandsManager={commandsManager}
+          servicesManager={servicesManager}
+          extensionManager={extensionManager}
+          configuration={{
+            ...configuration,
+          }}
+        />
+
+        <PanelForm
           commandsManager={commandsManager}
           servicesManager={servicesManager}
           extensionManager={extensionManager}

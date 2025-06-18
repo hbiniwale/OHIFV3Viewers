@@ -1,4 +1,3 @@
-import { hotkeys } from '@ohif/core';
 import i18n from 'i18next';
 
 import { id } from './id';
@@ -48,10 +47,10 @@ function modeFactory({ modeConfiguration }) {
     onModeEnter: ({ servicesManager }: withAppTypes) => {
       const { toolbarService } = servicesManager.services;
 
-      toolbarService.addButtons(toolbarButtons);
-      toolbarService.createButtonSection('primary', ['MeasurementTools', 'dragPan', 'TagBrowser']);
+      toolbarService.register(toolbarButtons);
+      toolbarService.updateSection('primary', ['MeasurementTools', 'dragPan', 'TagBrowser']);
 
-      toolbarService.createButtonSection('measurementSection', [
+      toolbarService.updateSection('MeasurementTools', [
         'line',
         'point',
         'polygon',
@@ -94,7 +93,7 @@ function modeFactory({ modeConfiguration }) {
               leftPanels: [ohif.leftPanel],
               leftPanelResizable: true,
               leftPanelClosed: true, // we have problem with rendering thumbnails for microscopy images
-              rightPanelClosed: true, // we do not have the save microscopy measurements yet
+              // rightPanelClosed: true, // we do not have the save microscopy measurements yet
               rightPanels: [ohif.rightPanel],
               rightPanelResizable: true,
               viewports: [

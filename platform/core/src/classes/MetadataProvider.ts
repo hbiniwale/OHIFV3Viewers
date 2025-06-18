@@ -1,12 +1,13 @@
 import queryString from 'query-string';
 import dicomParser from 'dicom-parser';
+import { utilities } from '@cornerstonejs/core';
 import { imageIdToURI } from '../utils';
-import getPixelSpacingInformation from '../utils/metadataProvider/getPixelSpacingInformation';
 import DicomMetadataStore from '../services/DicomMetadataStore';
 import fetchPaletteColorLookupTableData from '../utils/metadataProvider/fetchPaletteColorLookupTableData';
 import toNumber from '../utils/toNumber';
 import combineFrameInstance from '../utils/combineFrameInstance';
 import formatPN from '../utils/formatPN';
+const { calibratedPixelSpacingMetadataProvider, getPixelSpacingInformation } = utilities;
 
 class MetadataProvider {
   private readonly imageURIToUIDs: Map<string, any> = new Map();
@@ -214,7 +215,10 @@ class MetadataProvider {
         break;
       case WADO_IMAGE_LOADER_TAGS.MODALITY_LUT_MODULE:
         const { RescaleIntercept, RescaleSlope } = instance;
-        if (RescaleIntercept === undefined || RescaleSlope === undefined) {
+        // Early return if RescaleIntercept or RescaleSlope are not
+        // present (undefined) or explicitly set to null. We use loose
+        // equality in this case to check for *null* or *undefined*.
+        if (RescaleIntercept == null || RescaleSlope == null) {
           return;
         }
 
@@ -517,7 +521,7 @@ const WADO_IMAGE_LOADER = {
     // Fallback for DX images.
     // TODO: We should use the rest of the results of this function
     // to update the UI somehow
-    const { PixelSpacing } = getPixelSpacingInformation(instance);
+    const { PixelSpacing, type } = getPixelSpacingInformation(instance) || {};
 
     let rowPixelSpacing;
     let columnPixelSpacing;
@@ -531,6 +535,11 @@ const WADO_IMAGE_LOADER = {
     let imageOrientationPatient;
     if (PixelSpacing) {
       [rowPixelSpacing, columnPixelSpacing] = PixelSpacing;
+      calibratedPixelSpacingMetadataProvider.add(instance.imageId, {
+        rowPixelSpacing: parseFloat(PixelSpacing[0]),
+        columnPixelSpacing: parseFloat(PixelSpacing[1]),
+        type,
+      });
     } else {
       rowPixelSpacing = columnPixelSpacing = 1;
       usingDefaultValues = true;

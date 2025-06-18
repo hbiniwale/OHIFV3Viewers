@@ -1,4 +1,5 @@
 import type { Button } from '@ohif/core/types';
+import { ViewportGridService } from '@ohif/core';
 
 const setToolActiveToolbar = {
   commandName: 'setToolActiveToolbar',
@@ -7,22 +8,166 @@ const setToolActiveToolbar = {
   },
 };
 
+const callbacks = (toolName: string) => [
+  {
+    commandName: 'setViewportForToolConfiguration',
+    commandOptions: {
+      toolName,
+    },
+  },
+];
+
 const toolbarButtons: Button[] = [
+  {
+    id: 'AdvancedRenderingControls',
+    uiType: 'ohif.advancedRenderingControls',
+    props: {
+      buttonSection: true,
+    },
+  },
+  {
+    id: 'modalityLoadBadge',
+    uiType: 'ohif.modalityLoadBadge',
+    props: {
+      icon: 'Status',
+      label: 'Status',
+      tooltip: 'Status',
+      evaluate: {
+        name: 'evaluate.modalityLoadBadge',
+        hideWhenDisabled: true,
+      },
+    },
+  },
+  {
+    id: 'navigationComponent',
+    uiType: 'ohif.navigationComponent',
+    props: {
+      icon: 'Navigation',
+      label: 'Navigation',
+      tooltip: 'Navigate between segments/measurements and manage their visibility',
+      evaluate: {
+        name: 'evaluate.navigationComponent',
+        hideWhenDisabled: true,
+      },
+    },
+  },
+  {
+    id: 'trackingStatus',
+    uiType: 'ohif.trackingStatus',
+    props: {
+      icon: 'TrackingStatus',
+      label: 'Tracking Status',
+      tooltip: 'View and manage tracking status of measurements and annotations',
+      evaluate: {
+        name: 'evaluate.trackingStatus',
+        hideWhenDisabled: true,
+      },
+    },
+  },
+  {
+    id: 'dataOverlayMenu',
+    uiType: 'ohif.dataOverlayMenu',
+    props: {
+      icon: 'ViewportViews',
+      label: 'Data Overlay',
+      tooltip: 'Configure data overlay options and manage foreground/background display sets',
+      evaluate: 'evaluate.dataOverlayMenu',
+    },
+  },
+  {
+    id: 'orientationMenu',
+    uiType: 'ohif.orientationMenu',
+    props: {
+      icon: 'OrientationSwitch',
+      label: 'Orientation',
+      tooltip:
+        'Change viewport orientation between axial, sagittal, coronal and acquisition planes',
+      evaluate: {
+        name: 'evaluate.orientationMenu',
+        // hideWhenDisabled: true,
+      },
+    },
+  },
+  {
+    id: 'windowLevelMenuEmbedded',
+    uiType: 'ohif.windowLevelMenuEmbedded',
+    props: {
+      icon: 'WindowLevel',
+      label: 'Window Level',
+      tooltip: 'Adjust window/level presets and customize image contrast settings',
+      evaluate: {
+        name: 'evaluate.windowLevelMenuEmbedded',
+        hideWhenDisabled: true,
+      },
+    },
+  },
+  {
+    id: 'windowLevelMenu',
+    uiType: 'ohif.windowLevelMenu',
+    props: {
+      icon: 'WindowLevel',
+      label: 'Window Level',
+      tooltip: 'Adjust window/level presets and customize image contrast settings',
+      evaluate: 'evaluate.windowLevelMenu',
+    },
+  },
+  {
+    id: 'voiManualControlMenu',
+    uiType: 'ohif.voiManualControlMenu',
+    props: {
+      icon: 'WindowLevelAdvanced',
+      label: 'Advanced Window Level',
+      tooltip: 'Advanced window/level settings with manual controls and presets',
+      evaluate: 'evaluate.voiManualControlMenu',
+    },
+  },
+  {
+    id: 'thresholdMenu',
+    uiType: 'ohif.thresholdMenu',
+    props: {
+      icon: 'Threshold',
+      label: 'Threshold',
+      tooltip: 'Image threshold settings',
+      evaluate: {
+        name: 'evaluate.thresholdMenu',
+        hideWhenDisabled: true,
+      },
+    },
+  },
+  {
+    id: 'opacityMenu',
+    uiType: 'ohif.opacityMenu',
+    props: {
+      icon: 'Opacity',
+      label: 'Opacity',
+      tooltip: 'Image opacity settings',
+      evaluate: {
+        name: 'evaluate.opacityMenu',
+        hideWhenDisabled: true,
+      },
+    },
+  },
+  {
+    id: 'Colorbar',
+    uiType: 'ohif.colorbar',
+    props: {
+      type: 'tool',
+      label: 'Colorbar',
+    },
+  },
   // sections
   {
     id: 'MoreTools',
     uiType: 'ohif.toolButtonList',
     props: {
-      buttonSection: 'moreToolsSection',
-      groupId: 'MoreTools',
+      buttonSection: true,
     },
   },
   {
     id: 'BrushTools',
     uiType: 'ohif.toolBoxButtonGroup',
     props: {
-      groupId: 'BrushTools',
-      buttonSection: 'brushToolsSection',
+      buttonSection: true,
     },
   },
   // Section containers for the nested toolbox
@@ -30,16 +175,14 @@ const toolbarButtons: Button[] = [
     id: 'SegmentationUtilities',
     uiType: 'ohif.toolBoxButton',
     props: {
-      groupId: 'SegmentationUtilities',
-      buttonSection: 'segmentationToolboxUtilitySection',
+      buttonSection: true,
     },
   },
   {
     id: 'SegmentationTools',
     uiType: 'ohif.toolBoxButton',
     props: {
-      groupId: 'SegmentationTools',
-      buttonSection: 'segmentationToolboxToolsSection',
+      buttonSection: true,
     },
   },
   // tool defs
@@ -298,6 +441,8 @@ const toolbarButtons: Button[] = [
     props: {
       icon: 'icon-tool-interpolation',
       label: 'Interpolate Labelmap',
+      tooltip:
+        'Automatically fill in missing slices between drawn segments. Use brush or threshold tools on at least two slices, then click to interpolate across slices. Works in any direction. Volume must be reconstructable.',
       evaluate: [
         'evaluate.cornerstone.segmentation',
         {
@@ -314,12 +459,103 @@ const toolbarButtons: Button[] = [
     props: {
       icon: 'icon-tool-bidirectional-segment',
       label: 'Segment Bidirectional',
-      tooltip: 'Finding the largest bidirectional measurement per lesion',
+      tooltip:
+        'Automatically detects the largest length and width across slices for the selected segment and displays a bidirectional measurement.',
       evaluate: {
         name: 'evaluate.cornerstone.segmentation',
         disabledText: 'Create new segmentation to enable this tool.',
       },
       commands: 'runSegmentBidirectional',
+    },
+  },
+  {
+    id: 'RegionSegmentPlus',
+    uiType: 'ohif.toolBoxButton',
+    props: {
+      icon: 'icon-tool-click-segment',
+      label: 'One Click Segment',
+      tooltip:
+        'Detects segmentable regions with one click. Hover for visual feedback—click when a plus sign appears to auto-segment the lesion.',
+      evaluate: {
+        name: 'evaluate.cornerstone.segmentation',
+        toolNames: ['RegionSegmentPlus'],
+        disabledText: 'Create new segmentation to enable this tool.',
+      },
+      commands: 'setToolActiveToolbar',
+    },
+  },
+  {
+    id: 'LabelmapSlicePropagation',
+    uiType: 'ohif.toolBoxButton',
+    props: {
+      icon: 'icon-labelmap-slice-propagation',
+      label: 'Labelmap Assist',
+      tooltip:
+        'Toggle AI assistance for segmenting nearby slices. After drawing on a slice, scroll to preview predictions. Press Enter to accept or Esc to skip.',
+      evaluate: [
+        'evaluate.cornerstoneTool.toggle',
+        {
+          name: 'evaluate.cornerstone.hasSegmentation',
+        },
+      ],
+      listeners: {
+        [ViewportGridService.EVENTS.ACTIVE_VIEWPORT_ID_CHANGED]: callbacks(
+          'LabelmapSlicePropagation'
+        ),
+        [ViewportGridService.EVENTS.VIEWPORTS_READY]: callbacks('LabelmapSlicePropagation'),
+      },
+      commands: 'toggleEnabledDisabledToolbar',
+    },
+  },
+  {
+    id: 'MarkerLabelmap',
+    uiType: 'ohif.toolBoxButton',
+    props: {
+      icon: 'icon-marker-labelmap',
+      label: 'Marker Guided Labelmap',
+      tooltip:
+        'Use include/exclude markers to guide AI (SAM) segmentation. Click to place markers, Enter to accept results, Esc to reject, and N to go to the next slice while keeping markers.',
+      evaluate: [
+        {
+          name: 'evaluate.cornerstone.segmentation',
+          toolNames: ['MarkerLabelmap', 'MarkerInclude', 'MarkerExclude'],
+        },
+      ],
+      commands: 'setToolActiveToolbar',
+      listeners: {
+        [ViewportGridService.EVENTS.ACTIVE_VIEWPORT_ID_CHANGED]: callbacks('MarkerLabelmap'),
+        [ViewportGridService.EVENTS.VIEWPORTS_READY]: callbacks('MarkerLabelmap'),
+      },
+      options: [
+        {
+          name: 'Marker Mode',
+          type: 'radio',
+          id: 'marker-mode',
+          value: 'markerInclude',
+          values: [
+            { value: 'markerInclude', label: 'Include' },
+            { value: 'markerExclude', label: 'Exclude' },
+          ],
+          commands: ({ commandsManager, options }) => {
+            const markerModeOption = options.find(option => option.id === 'marker-mode');
+            if (markerModeOption.value === 'markerInclude') {
+              commandsManager.run('setToolActive', {
+                toolName: 'MarkerInclude',
+              });
+            } else {
+              commandsManager.run('setToolActive', {
+                toolName: 'MarkerExclude',
+              });
+            }
+          },
+        },
+        {
+          name: 'Clear Markers',
+          type: 'button',
+          id: 'clear-markers',
+          commands: 'clearMarkersForMarkerLabelmap',
+        },
+      ],
     },
   },
   {

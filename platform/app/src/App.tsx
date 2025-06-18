@@ -13,22 +13,20 @@ import {
   HotkeysManager,
   ServiceProvidersManager,
   SystemContextProvider,
+  ViewportRefsProvider,
 } from '@ohif/core';
-import {
-  ThemeWrapper,
-  ViewportDialogProvider,
-  CineProvider,
-  UserAuthenticationProvider,
-} from '@ohif/ui';
 import {
   ThemeWrapper as ThemeWrapperNext,
   NotificationProvider,
   ViewportGridProvider,
   DialogProvider,
+  CineProvider,
   TooltipProvider,
   Modal as ModalNext,
   ManagedDialog,
   ModalProvider,
+  ViewportDialogProvider,
+  UserAuthenticationProvider,
 } from '@ohif/ui-next';
 // Viewer Project
 // TODO: Should this influence study list?
@@ -37,6 +35,7 @@ import createRoutes from './routes';
 import appInit from './appInit.js';
 import OpenIdConnectRoutes from './utils/OpenIdConnectRoutes';
 import { ShepherdJourneyProvider } from 'react-shepherd';
+import './App.css';
 
 let commandsManager: CommandsManager,
   extensionManager: ExtensionManager,
@@ -114,8 +113,8 @@ function App({
     [UserAuthenticationProvider, { service: userAuthenticationService }],
     [I18nextProvider, { i18n }],
     [ThemeWrapperNext],
-    [ThemeWrapper],
     [SystemContextProvider, { commandsManager, extensionManager, hotkeysManager, servicesManager }],
+    [ViewportRefsProvider],
     [ViewportGridProvider, { service: viewportGridService }],
     [ViewportDialogProvider, { service: uiViewportDialogService }],
     [CineProvider, { service: cineService }],

@@ -1,5 +1,4 @@
-import React, { useEffect, useCallback, useRef, useMemo } from 'react';
-import { useResizeDetector } from 'react-resize-detector';
+import React, { useEffect, useCallback, useRef } from 'react';
 import { Types, MeasurementService } from '@ohif/core';
 import { ViewportGrid, ViewportPane } from '@ohif/ui-next';
 import { useViewportGrid } from '@ohif/ui-next';
@@ -13,14 +12,6 @@ function ViewerViewportGrid(props: withAppTypes) {
 
   const { layout, activeViewportId, viewports, isHangingProtocolLayout } = viewportGrid;
   const { numCols, numRows } = layout;
-  const { ref: resizeRef } = useResizeDetector({
-    refreshMode: 'debounce',
-    refreshRate: 7,
-    refreshOptions: { leading: true },
-    onResize: () => {
-      viewportGridService.setViewportGridSizeChanged();
-    },
-  });
   const layoutHash = useRef(null);
 
   const {
@@ -239,7 +230,7 @@ function ViewerViewportGrid(props: withAppTypes) {
         // Update stored position presentation
         commandsManager.run('updateStoredPositionPresentation', {
           viewportId: viewport.viewportId,
-          displaySetInstanceUID: referencedDisplaySetInstanceUID,
+          displaySetInstanceUIDs: [referencedDisplaySetInstanceUID],
           referencedImageId: measurement.referencedImageId,
           options: {
             ...measurement.metadata,
@@ -247,7 +238,8 @@ function ViewerViewportGrid(props: withAppTypes) {
         });
 
         event.consume();
-        viewportGridService.setDisplaySetsForViewports(updatedViewports);
+
+        commandsManager.run('setDisplaySetsForViewports', { viewportsToUpdate: updatedViewports });
       }
     );
 
@@ -257,6 +249,7 @@ function ViewerViewportGrid(props: withAppTypes) {
   }, [viewports, _getUpdatedViewports]);
 
   const onDropHandler = (viewportId, { displaySetInstanceUID }) => {
+    const { viewportGridService } = servicesManager.services;
     const customOnDropHandler = customizationService.getCustomization('customOnDropHandler');
     const dropHandlerPromise = customOnDropHandler({
       ...props,
@@ -264,17 +257,32 @@ function ViewerViewportGrid(props: withAppTypes) {
       displaySetInstanceUID,
       appConfig,
     });
-
     dropHandlerPromise.then(({ handled }) => {
       if (!handled) {
         const updatedViewports = _getUpdatedViewports(viewportId, displaySetInstanceUID);
-        viewportGridService.setDisplaySetsForViewports(updatedViewports);
+
+        commandsManager.run('setDisplaySetsForViewports', { viewportsToUpdate: updatedViewports });
       }
     });
+    viewportGridService.publishViewportOnDropHandled({ displaySetInstanceUID });
   };
 
   // Store previous isReferenceViewable values to avoid infinite loops
   const prevReferenceViewableMap = useRef(new Map());
+  // Track viewports that need isReferenceViewable updates
+  const viewportsToUpdate = useRef(new Map());
+
+  // Apply isReferenceViewable updates in an effect, not during render
+  useEffect(() => {
+    const updates = viewportsToUpdate.current;
+    if (updates.size > 0) {
+      updates.forEach((isReferenceViewable, viewportId) => {
+        viewportGridService.setIsReferenceViewable(viewportId, isReferenceViewable);
+        prevReferenceViewableMap.current.set(viewportId, isReferenceViewable);
+      });
+      viewportsToUpdate.current.clear();
+    }
+  });
 
   const getViewportPanes = useCallback(() => {
     const viewportPanes = [];
@@ -313,7 +321,7 @@ function ViewerViewportGrid(props: withAppTypes) {
         uiNotificationService
       );
 
-      // Only update isReferenceViewable if it's changed to avoid render loops
+      // Only queue isReferenceViewable updates if it's changed to avoid render loops
       // We need to handle both function and non-function values
       if (viewportId) {
         const prevValue = prevReferenceViewableMap.current.get(viewportId);
@@ -323,8 +331,8 @@ function ViewerViewportGrid(props: withAppTypes) {
         // For non-functions, compare directly. For functions, we treat them as always different
         // (this is conservative but safe)
         if (!isSameFunction && prevValue !== isReferenceViewable) {
-          viewportGridService.setIsReferenceViewable(viewportId, isReferenceViewable);
-          prevReferenceViewableMap.current.set(viewportId, isReferenceViewable);
+          // Queue the update instead of doing it during render
+          viewportsToUpdate.current.set(viewportId, isReferenceViewable);
         }
       }
 
@@ -359,11 +367,11 @@ function ViewerViewportGrid(props: withAppTypes) {
         const tolerance = 0.01;
 
         if (x + width < 1 - tolerance) {
-          style.borderRight = '1px solid #3a3f99';
+          style.borderRight = '1px solid hsl(var(--input))';
         }
 
         if (y + height < 1 - tolerance) {
-          style.borderBottom = '1px solid #3a3f99';
+          style.borderBottom = '1px solid hsl(var(--input))';
         }
 
         return style;
@@ -407,7 +415,7 @@ function ViewerViewportGrid(props: withAppTypes) {
               displaySetOptions={displaySetOptions}
               needsRerendering={displaySetsNeedsRerendering}
               isHangingProtocolLayout={isHangingProtocolLayout}
-              onElementEnabled={() => {
+              onElementEnabled={evt => {
                 viewportGridService.setViewportIsReady(viewportId, true);
               }}
             />
@@ -427,10 +435,7 @@ function ViewerViewportGrid(props: withAppTypes) {
   }
 
   return (
-    <div
-      ref={resizeRef}
-      className="border-secondary-light h-full w-full border"
-    >
+    <div className="border-input h-[calc(100%-0.25rem)] w-full border">
       <ViewportGrid
         numRows={numRows}
         numCols={numCols}

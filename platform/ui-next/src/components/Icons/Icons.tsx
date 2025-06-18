@@ -75,6 +75,13 @@ import IconTransferring from './Sources/IconTransferring';
 import Alert from './Sources/Alert';
 import AlertOutline from './Sources/AlertOutline';
 import Clipboard from './Sources/Clipboard';
+import OrientationSwitch from './Sources/OrientationSwitch';
+import LayerBackground from './Sources/LayerBackground';
+import LayerForeground from './Sources/LayerForeground';
+import LayerSegmentation from './Sources/LayerSegmentation';
+import WindowLevelAdvanced from './Sources/WindowLevelAdvanced';
+import Opacity from './Sources/Opacity';
+import Threshold from './Sources/Threshold';
 import {
   Tool3DRotate,
   ToolAngle,
@@ -132,6 +139,7 @@ import {
   ToolSegmentAnything,
   ToolContract,
   ToolExpand,
+  ToolClickSegment,
 } from './Sources/Tools';
 import ActionNewDialog from './Sources/ActionNewDialog';
 import NotificationInfo from './Sources/NotificationInfo';
@@ -377,6 +385,10 @@ export const Icons = {
     />
   ),
   // Icons
+  LayerBackground,
+  LayerForeground,
+  LayerSegmentation,
+  OrientationSwitch,
   Clipboard,
   ActionNewDialog,
   GroupLayers,
@@ -574,6 +586,9 @@ export const Icons = {
   OHIFLogoColorDarkBackground,
   Magnifier,
   Pencil,
+  WindowLevelAdvanced,
+  Opacity,
+  Threshold,
   //
   //
   //
@@ -597,9 +612,10 @@ export const Icons = {
   'checkbox-active': (props: IconProps) => CheckBoxChecked(props),
   'icon-tool-eraser': (props: IconProps) => ToolEraser(props),
   'icon-tool-brush': (props: IconProps) => ToolBrush(props),
-  'icon-tool-labelmap-assist': (props: IconProps) => ToolLabelmapAssist(props),
-  'icon-tool-segment-anything': (props: IconProps) => ToolSegmentAnything(props),
+  'icon-labelmap-slice-propagation': (props: IconProps) => ToolLabelmapAssist(props),
+  'icon-marker-labelmap': (props: IconProps) => ToolSegmentAnything(props),
   'icon-tool-threshold': (props: IconProps) => ToolThreshold(props),
+  'icon-tool-click-segment': (props: IconProps) => ToolClickSegment(props),
   'icon-tool-pet-segment': (props: IconProps) => ToolPETSegment(props),
   'icon-tool-interpolation': (props: IconProps) => ToolInterpolation(props),
   'icon-tool-bidirectional-segment': (props: IconProps) => ToolBidirectionalSegment(props),

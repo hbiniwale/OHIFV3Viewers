@@ -242,7 +242,7 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: false
       - run:
-          name: Build Docker image for arm64
+          name: Build Docker image for arm64 (Release)
           command: |
             # This file will exist if a new version was published by
             # our command in the previous job.
@@ -339,7 +339,6 @@ jobs:
     resource_class: large
     parallelism: 8
     steps:
-      - install_bun
       - run:
           name: Install System Dependencies
           command: |
@@ -353,12 +352,11 @@ jobs:
           name: Export Display Variable
           command: export DISPLAY=:99
       - cypress/install:
-          install-command: bun install --no-save
-          package-manager: yarn
+          install-command: yarn install --no-save
       - cypress/run-tests:
           cypress-command: |
             npx wait-on@latest http://localhost:3000 && cd platform/app && npx cypress run --record --parallel
-          start-command: bun run test:data && bun run test:e2e:serve
+          start-command: yarn run test:data && yarn run test:e2e:serve
 
   DOCKER_MULTIARCH_MANIFEST:
     <<: *defaults
@@ -369,7 +367,7 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: false
       - run:
-          name: Create and push multi-architecture manifest
+          name: Create and push multi-architecture manifest (Release)
           command: |
             # This file will exist if a new version was published by
             # our command in the previous job.

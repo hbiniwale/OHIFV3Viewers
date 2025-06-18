@@ -3,14 +3,19 @@ import PropTypes from 'prop-types';
 import { Machine } from 'xstate';
 import { useMachine } from '@xstate/react';
 import { useViewportGrid } from '@ohif/ui-next';
-import { promptLabelAnnotation, promptSaveReport } from '@ohif/extension-default';
 import { machineConfiguration, defaultOptions, RESPONSE } from './measurementTrackingMachine';
-import promptBeginTracking from './promptBeginTracking';
-import promptTrackNewSeries from './promptTrackNewSeries';
-import promptTrackNewStudy from './promptTrackNewStudy';
-import promptHydrateStructuredReport from './promptHydrateStructuredReport';
+import { measurementTrackingMode } from './promptBeginTracking';
 import hydrateStructuredReport from './hydrateStructuredReport';
 import { useAppConfig } from '@state';
+import {
+  promptBeginTrackingWrapper,
+  promptHydrateStructuredReportWrapper,
+  promptTrackNewSeriesWrapper,
+  promptTrackNewStudyWrapper,
+  promptLabelAnnotationWrapper,
+  promptSaveReportWrapper,
+  promptHasDirtyAnnotationsWrapper,
+} from './promptWrapperFunctions';
 
 const TrackedMeasurementsContext = React.createContext();
 TrackedMeasurementsContext.displayName = 'TrackedMeasurementsContext';
@@ -30,12 +35,18 @@ function TrackedMeasurementsContextProvider(
 
   const [viewportGrid, viewportGridService] = useViewportGrid();
   const { activeViewportId, viewports } = viewportGrid;
-  const { measurementService, displaySetService, customizationService } = servicesManager.services;
+  const {
+    measurementService,
+    displaySetService,
+    customizationService,
+    trackedMeasurementsService,
+  } = servicesManager.services as AppTypes.Services;
 
   const machineOptions = Object.assign({}, defaultOptions);
   machineOptions.actions = Object.assign({}, machineOptions.actions, {
     jumpToFirstMeasurementInActiveViewport: (ctx, evt) => {
-      const { trackedStudy, trackedSeries, activeViewportId } = ctx;
+      const { trackedStudy, trackedSeries } = ctx;
+      const { viewportId: activeViewportId } = evt.data;
       const measurements = measurementService.getMeasurements();
       const trackedMeasurements = measurements.filter(
         m => trackedStudy === m.referenceStudyUID && trackedSeries.includes(m.referenceSeriesUID)
@@ -82,7 +93,8 @@ function TrackedMeasurementsContextProvider(
     },
 
     jumpToSameImageInActiveViewport: (ctx, evt) => {
-      const { trackedStudy, trackedSeries, activeViewportId } = ctx;
+      const { trackedStudy, trackedSeries } = ctx;
+      const { viewportId: activeViewportId } = evt.data;
       const measurements = measurementService.getMeasurements();
       const trackedMeasurements = measurements.filter(
         m => trackedStudy === m.referenceStudyUID && trackedSeries.includes(m.referenceSeriesUID)
@@ -106,7 +118,7 @@ function TrackedMeasurementsContextProvider(
       // it will be in the correct position zoom and pan
       commandsManager.runCommand('updateStoredPositionPresentation', {
         viewportId: activeViewportId,
-        displaySetInstanceUID: referencedDisplaySetUID,
+        displaySetInstanceUIDs: [referencedDisplaySetUID],
         referencedImageId: trackedMeasurement.referencedImageId,
       });
 
@@ -143,31 +155,64 @@ function TrackedMeasurementsContextProvider(
       for (let i = 0; i < measurementIds.length; i++) {
         measurementService.remove(measurementIds[i]);
       }
+      measurementService.setIsMeasurementDeletedIndividually(false);
+    },
+    clearDisplaySetHydratedState: (ctx, evt) => {
+      const { displaySetInstanceUID } = evt.data ?? evt;
+
+      const displaysets = displaySetService.getActiveDisplaySets();
+      displaysets?.forEach(displayset => {
+        if (
+          displayset.Modality === 'SR' &&
+          displayset.displaySetInstanceUID !== displaySetInstanceUID &&
+          displayset.isHydrated
+        ) {
+          displayset.isHydrated = false;
+          displayset.isLoaded = false;
+        }
+      });
+    },
+    updatedViewports: (ctx, evt) => {
+      const { hangingProtocolService } = servicesManager.services;
+      const { displaySetInstanceUID, viewportId } = evt.data ?? evt;
+
+      const updatedViewports = hangingProtocolService.getViewportsRequireUpdate(
+        viewportId,
+        displaySetInstanceUID
+      );
+
+      viewportGridService.setDisplaySetsForViewports(updatedViewports);
     },
   });
   machineOptions.services = Object.assign({}, machineOptions.services, {
-    promptBeginTracking: promptBeginTracking.bind(null, {
+    promptBeginTracking: promptBeginTrackingWrapper.bind(null, {
       servicesManager,
       extensionManager,
       appConfig,
     }),
-    promptTrackNewSeries: promptTrackNewSeries.bind(null, {
+    promptTrackNewSeries: promptTrackNewSeriesWrapper.bind(null, {
       servicesManager,
       extensionManager,
       appConfig,
     }),
-    promptTrackNewStudy: promptTrackNewStudy.bind(null, {
+    promptTrackNewStudy: promptTrackNewStudyWrapper.bind(null, {
       servicesManager,
       extensionManager,
       appConfig,
     }),
-    promptSaveReport: promptSaveReport.bind(null, {
+    promptSaveReport: promptSaveReportWrapper.bind(null, {
       servicesManager,
       commandsManager,
       extensionManager,
       appConfig,
     }),
-    promptHydrateStructuredReport: promptHydrateStructuredReport.bind(null, {
+    promptHydrateStructuredReport: promptHydrateStructuredReportWrapper.bind(null, {
+      servicesManager,
+      extensionManager,
+      commandsManager,
+      appConfig,
+    }),
+    promptHasDirtyAnnotations: promptHasDirtyAnnotationsWrapper.bind(null, {
       servicesManager,
       extensionManager,
       commandsManager,
@@ -179,7 +224,7 @@ function TrackedMeasurementsContextProvider(
       commandsManager,
       appConfig,
     }),
-    promptLabelAnnotation: promptLabelAnnotation.bind(null, {
+    promptLabelAnnotation: promptLabelAnnotationWrapper.bind(null, {
       servicesManager,
       extensionManager,
       commandsManager,
@@ -193,6 +238,25 @@ function TrackedMeasurementsContextProvider(
     isLabelOnMeasureAndShouldKillMachine: (ctx, evt, condMeta) => {
       const labelConfig = customizationService.getCustomization('measurementLabels');
       return evt.data && evt.data.userResponse === RESPONSE.NO_NEVER && labelConfig?.labelOnMeasure;
+    },
+    isSimplifiedConfig: (ctx, evt, condMeta) => {
+      return appConfig?.measurementTrackingMode === measurementTrackingMode.SIMPLIFIED;
+    },
+    simplifiedAndLoadSR: (ctx, evt, condMeta) => {
+      return (
+        appConfig?.measurementTrackingMode === measurementTrackingMode.SIMPLIFIED &&
+        evt.data.isBackupSave === false
+      );
+    },
+    hasDirtyAndSimplified: (ctx, evt, condMeta) => {
+      const measurements = measurementService.getMeasurements();
+      const hasDirtyMeasurements =
+        measurements.some(measurement => measurement.isDirty) ||
+        (measurements.length && measurementService.getIsMeasurementDeletedIndividually());
+      return (
+        appConfig?.measurementTrackingMode === measurementTrackingMode.SIMPLIFIED &&
+        hasDirtyMeasurements
+      );
     },
   });
 
@@ -212,6 +276,13 @@ function TrackedMeasurementsContextProvider(
   const [trackedMeasurements, sendTrackedMeasurementsEvent] = useMachine(
     measurementTrackingMachine
   );
+
+  // Update TrackedMeasurementsService when trackedSeries changes in context
+  useEffect(() => {
+    if (trackedMeasurements?.context?.trackedSeries && trackedMeasurementsService) {
+      trackedMeasurementsService.updateTrackedSeries(trackedMeasurements.context.trackedSeries);
+    }
+  }, [trackedMeasurements?.context?.trackedSeries, trackedMeasurementsService]);
 
   useEffect(() => {
     // Update the state machine with the active viewport ID
@@ -266,7 +337,8 @@ function TrackedMeasurementsContextProvider(
         // load function added by our sopClassHandler module
         if (
           displaySet.SOPClassHandlerId === SR_SOPCLASSHANDLERID &&
-          displaySet.isRehydratable === true
+          displaySet.isRehydratable === true &&
+          !displaySet.isHydrated
         ) {
           const params = {
             displaySetInstanceUID: displaySet.displaySetInstanceUID,

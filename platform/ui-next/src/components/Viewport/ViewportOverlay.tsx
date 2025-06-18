@@ -17,17 +17,11 @@ const classes = {
   bottomLeft: 'overlay-bottom left-viewport',
 };
 
-function ViewportOverlay({
-  topLeft,
-  topRight,
-  bottomRight,
-  bottomLeft,
-  color = 'text-primary-light',
-}) {
+function ViewportOverlay({ topLeft, topRight, bottomRight, bottomLeft, color = 'text-highlight', shadowClass = 'shadow-dark' }) {
   const overlay = 'absolute pointer-events-none viewport-overlay';
 
   return (
-    <div className={classNames(color, 'overlay-text text-[13px] leading-5')}>
+    <div className={classNames(color, 'overlay-text', shadowClass, 'text-base leading-5')}>
       <div
         data-cy="viewport-overlay-top-left"
         className={classNames(overlay, classes.topLeft)}
@@ -37,14 +31,14 @@ function ViewportOverlay({
       <div
         data-cy="viewport-overlay-top-right"
         className={classNames(overlay, classes.topRight)}
-        style={{ transform: 'translateX(-8px)' }}
+        style={{ transform: 'translateX(9px)' }}
       >
         {topRight}
       </div>
       <div
         data-cy="viewport-overlay-bottom-right"
         className={classNames(overlay, classes.bottomRight)}
-        style={{ transform: 'translateX(-8px)' }}
+        style={{ transform: 'translateX(6px)' }}
       >
         {bottomRight}
       </div>
@@ -64,6 +58,7 @@ ViewportOverlay.propTypes = {
   bottomRight: PropTypes.node,
   bottomLeft: PropTypes.node,
   color: PropTypes.string,
+  shadowClass: PropTypes.string,
 };
 
 export { ViewportOverlay };

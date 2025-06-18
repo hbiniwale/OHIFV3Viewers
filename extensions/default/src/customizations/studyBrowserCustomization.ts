@@ -14,6 +14,26 @@ export default {
         });
       },
     },
+    {
+      id: 'addAsLayer',
+      label: 'Add as Layer',
+      iconName: 'ViewportViews',
+      onClick: ({ commandsManager, displaySetInstanceUID, servicesManager }: withAppTypes) => {
+        const { viewportGridService } = servicesManager.services;
+
+        // Get the active viewport
+        const { activeViewportId } = viewportGridService.getState();
+        if (!activeViewportId) {
+          return;
+        }
+
+        // Use the new command to add the display set as a layer
+        commandsManager.runCommand('addDisplaySetAsLayer', {
+          viewportId: activeViewportId,
+          displaySetInstanceUID,
+        });
+      },
+    },
   ],
   'studyBrowser.sortFunctions': [
     {
@@ -46,10 +66,9 @@ export default {
   'studyBrowser.studyMode': 'all',
   'studyBrowser.thumbnailDoubleClickCallback': {
     callbacks: [
-      ({ activeViewportId, servicesManager, isHangingProtocolLayout }) =>
+      ({ activeViewportId, servicesManager, commandsManager, isHangingProtocolLayout }) =>
         async displaySetInstanceUID => {
-          const { hangingProtocolService, viewportGridService, uiNotificationService } =
-            servicesManager.services;
+          const { hangingProtocolService, uiNotificationService } = servicesManager.services;
           let updatedViewports = [];
           const viewportId = activeViewportId;
 
@@ -69,7 +88,9 @@ export default {
             });
           }
 
-          viewportGridService.setDisplaySetsForViewports(updatedViewports);
+          commandsManager.run('setDisplaySetsForViewports', {
+            viewportsToUpdate: updatedViewports,
+          });
         },
     ],
   },

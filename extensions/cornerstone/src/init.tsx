@@ -39,6 +39,7 @@ import { useLutPresentationStore } from './stores/useLutPresentationStore';
 import { usePositionPresentationStore } from './stores/usePositionPresentationStore';
 import { useSegmentationPresentationStore } from './stores/useSegmentationPresentationStore';
 import { imageRetrieveMetadataProvider } from '@cornerstonejs/core/utilities';
+import { initializeWebWorkerProgressHandler } from './utils/initWebWorkerProgressHandler';
 
 const { registerColormap } = csUtilities.colormap;
 
@@ -54,6 +55,10 @@ export default async function init({
   extensionManager,
   appConfig,
 }: withAppTypes): Promise<void> {
+  // Use a public library path of PUBLIC_URL plus the component name
+  // This safely separates components that are loaded as-is.
+  window.PUBLIC_LIB_URL ||= './${component}/';
+
   // Note: this should run first before initializing the cornerstone
   // DO NOT CHANGE THE ORDER
 
@@ -99,6 +104,12 @@ export default async function init({
 
   toolbarService.registerEventForToolbarUpdate(colorbarService, [
     colorbarService.EVENTS.STATE_CHANGED,
+  ]);
+
+  toolbarService.registerEventForToolbarUpdate(segmentationService, [
+    segmentationService.EVENTS.SEGMENTATION_MODIFIED,
+    segmentationService.EVENTS.SEGMENTATION_REPRESENTATION_MODIFIED,
+    segmentationService.EVENTS.ANNOTATION_CUT_MERGE_PROCESS_COMPLETED,
   ]);
 
   window.services = servicesManager.services;
@@ -188,15 +199,10 @@ export default async function init({
   initCineService(servicesManager);
   initStudyPrefetcherService(servicesManager);
 
-  [
-    measurementService.EVENTS.JUMP_TO_MEASUREMENT_LAYOUT,
-    measurementService.EVENTS.JUMP_TO_MEASUREMENT_VIEWPORT,
-  ].forEach(event => {
-    measurementService.subscribe(event, evt => {
-      const { measurement } = evt;
-      const { uid: annotationUID } = measurement;
-      cornerstoneTools.annotation.selection.setAnnotationSelected(annotationUID, true);
-    });
+  measurementService.subscribe(measurementService.EVENTS.JUMP_TO_MEASUREMENT, evt => {
+    const { measurement } = evt;
+    const { uid: annotationUID } = measurement;
+    commandsManager.runCommand('jumpToMeasurementViewport', { measurement, annotationUID, evt });
   });
 
   // When a custom image load is performed, update the relevant viewports
@@ -305,76 +311,6 @@ export default async function init({
 
   // Call this function when initializing
   initializeWebWorkerProgressHandler(servicesManager.services.uiNotificationService);
-}
-
-function initializeWebWorkerProgressHandler(uiNotificationService) {
-  // Use a single map to track all active worker tasks
-  const activeWorkerTasks = new Map();
-
-  // Create a normalized task key that doesn't include the random ID
-  // This helps us identify and deduplicate the same type of task
-  const getNormalizedTaskKey = type => {
-    return `worker-task-${type.toLowerCase().replace(/\s+/g, '-')}`;
-  };
-
-  eventTarget.addEventListener(EVENTS.WEB_WORKER_PROGRESS, ({ detail }) => {
-    const { progress, type, id } = detail;
-
-    // Skip notifications for compute statistics
-    if (type === cornerstoneTools.Enums.WorkerTypes.COMPUTE_STATISTICS) {
-      return;
-    }
-
-    const normalizedKey = getNormalizedTaskKey(type);
-
-    if (progress === 0) {
-      // Check if we're already tracking a task of this type
-      if (!activeWorkerTasks.has(normalizedKey)) {
-        const progressPromise = new Promise((resolve, reject) => {
-          activeWorkerTasks.set(normalizedKey, {
-            resolve,
-            reject,
-            originalId: id,
-            type,
-          });
-        });
-
-        uiNotificationService.show({
-          id: normalizedKey, // Use the normalized key as ID for better deduplication
-          title: `${type}`,
-          message: `Computing...`,
-          autoClose: false,
-          allowDuplicates: false,
-          deduplicationInterval: 60000, // 60 seconds - prevent frequent notifications of same type
-          promise: progressPromise,
-          promiseMessages: {
-            loading: `Computing...`,
-            success: `Completed successfully`,
-            error: 'Web Worker failed',
-          },
-        });
-      } else {
-        // Already tracking this type of task, just let it continue
-        console.debug(`Already tracking a "${type}" task, skipping duplicate notification`);
-      }
-    }
-    // Task completed
-    else if (progress === 100) {
-      // Check if we have this task type in our tracking map
-      const taskData = activeWorkerTasks.get(normalizedKey);
-
-      if (taskData) {
-        // Resolve the promise to update the notification
-        const { resolve } = taskData;
-        resolve({ progress, type });
-
-        // Remove from tracking
-        activeWorkerTasks.delete(normalizedKey);
-
-        console.debug(`Worker task "${type}" completed successfully`);
-      }
-    }
-  });
 }
 
 /**

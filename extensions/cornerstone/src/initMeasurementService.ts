@@ -38,6 +38,7 @@ const initMeasurementService = (
     LivewireContour,
     Probe,
     UltrasoundDirectional,
+    UltrasoundPleuraBLine,
     SegmentBidirectional,
   } = measurementServiceMappingsFactory(
     measurementService,
@@ -175,6 +176,14 @@ const initMeasurementService = (
     UltrasoundDirectional.matchingCriteria,
     UltrasoundDirectional.toAnnotation,
     UltrasoundDirectional.toMeasurement
+  );
+
+  measurementService.addMapping(
+    csTools3DVer1MeasurementSource,
+    'UltrasoundPleuraBLineTool',
+    UltrasoundPleuraBLine.matchingCriteria,
+    UltrasoundPleuraBLine.toAnnotation,
+    UltrasoundPleuraBLine.toMeasurement
   );
 
   measurementService.addMapping(
@@ -350,6 +359,7 @@ const connectMeasurementServiceToTools = ({
       return;
     }
 
+    commandsManager.run('startRecordingForAnnotationGroup');
     for (const measurement of Object.values(measurements)) {
       const { uid, source } = measurement;
       if (source.name !== CORNERSTONE_3D_TOOLS_SOURCE_NAME) {
@@ -363,6 +373,7 @@ const connectMeasurementServiceToTools = ({
         options: { deleting: true },
       });
     }
+    commandsManager.run('endRecordingForAnnotationGroup');
 
     // trigger a render
     cornerstoneViewportService.getRenderingEngine().render();
@@ -398,10 +409,6 @@ const connectMeasurementServiceToTools = ({
         setAnnotationLabel(sourceAnnotation, element, label);
       }
 
-      if (metadata.toolName === 'ArrowAnnotate') {
-        data.text = label;
-      }
-
       // update the isLocked state
       annotation.locking.setAnnotationLocked(uid, isLocked);
 
@@ -429,7 +436,7 @@ const connectMeasurementServiceToTools = ({
         return;
       }
 
-      const { referenceSeriesUID, referenceStudyUID, SOPInstanceUID } = measurement;
+      const { referenceSeriesUID, referenceStudyUID, SOPInstanceUID, metadata } = measurement;
 
       const instance = DicomMetadataStore.getInstance(
         referenceStudyUID,
@@ -443,7 +450,7 @@ const connectMeasurementServiceToTools = ({
       if (measurement?.metadata?.referencedImageId) {
         imageId = measurement.metadata.referencedImageId;
         frameNumber = getSOPInstanceAttributes(measurement.metadata.referencedImageId).frameNumber;
-      } else {
+      } else if (instance) {
         imageId = dataSource.getImageIdsForInstance({ instance });
       }
 
@@ -456,8 +463,12 @@ const connectMeasurementServiceToTools = ({
         annotationUID: measurement.uid,
         highlighted: false,
         isLocked: false,
-        invalidated: false,
+        // This is used to force a re-render of the annotation to
+        // re-calculate cached stats since sometimes in SR we
+        // get empty cached stats
+        invalidated: true,
         metadata: {
+          ...metadata,
           toolName: measurement.toolName,
           FrameOfReferenceUID: measurement.FrameOfReferenceUID,
           referencedImageId: imageId,

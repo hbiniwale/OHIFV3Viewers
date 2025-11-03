@@ -10,9 +10,10 @@ const colorsByOrientation = {
   coronal: 'rgb(0, 200, 0)',
 };
 
-function createTools(utilityModule) {
+function createTools({ utilityModule, commandsManager }) {
   const { toolNames, Enums } = utilityModule.exports;
-  return {
+
+  const tools = {
     active: [
       { toolName: toolNames.WindowLevel, bindings: [{ mouseButton: Enums.MouseBindings.Primary }] },
       { toolName: toolNames.Pan, bindings: [{ mouseButton: Enums.MouseBindings.Auxiliary }] },
@@ -105,6 +106,9 @@ function createTools(utilityModule) {
           },
         },
       },
+      {
+        toolName: toolNames.LabelMapEditWithContourTool,
+      },
       { toolName: toolNames.CircleScissors },
       { toolName: toolNames.RectangleScissors },
       { toolName: toolNames.SphereScissors },
@@ -113,16 +117,56 @@ function createTools(utilityModule) {
       { toolName: toolNames.WindowLevelRegion },
 
       { toolName: toolNames.UltrasoundDirectional },
+      {
+        toolName: toolNames.PlanarFreehandContourSegmentation,
+      },
+      { toolName: toolNames.LivewireContourSegmentation },
+      { toolName: toolNames.SculptorTool },
+      { toolName: toolNames.PlanarFreehandROI },
+      {
+        toolName: 'CatmullRomSplineROI',
+        parentTool: toolNames.SplineContourSegmentation,
+        configuration: {
+          spline: {
+            type: 'CATMULLROM',
+            enableTwoPointPreview: true,
+          },
+        },
+      },
+      {
+        toolName: 'LinearSplineROI',
+        parentTool: toolNames.SplineContourSegmentation,
+        configuration: {
+          spline: {
+            type: 'LINEAR',
+            enableTwoPointPreview: true,
+          },
+        },
+      },
+      {
+        toolName: 'BSplineROI',
+        parentTool: toolNames.SplineContourSegmentation,
+        configuration: {
+          spline: {
+            type: 'BSPLINE',
+            enableTwoPointPreview: true,
+          },
+        },
+      },
     ],
     disabled: [{ toolName: toolNames.ReferenceLines }, { toolName: toolNames.AdvancedMagnify }],
   };
+
+  const updatedTools = commandsManager.run('initializeSegmentLabelTool', { tools });
+
+  return updatedTools;
 }
 
 function initDefaultToolGroup(extensionManager, toolGroupService, commandsManager, toolGroupId) {
   const utilityModule = extensionManager.getModuleEntry(
     '@ohif/extension-cornerstone.utilityModule.tools'
   );
-  const tools = createTools(utilityModule);
+  const tools = createTools({ commandsManager, utilityModule });
   toolGroupService.createToolGroupAndAddTools(toolGroupId, tools);
 }
 
@@ -132,7 +176,7 @@ function initMPRToolGroup(extensionManager, toolGroupService, commandsManager) {
   );
   const servicesManager = extensionManager._servicesManager;
   const { cornerstoneViewportService } = servicesManager.services;
-  const tools = createTools(utilityModule);
+  const tools = createTools({ commandsManager, utilityModule });
   tools.disabled.push(
     {
       toolName: utilityModule.exports.toolNames.Crosshairs,

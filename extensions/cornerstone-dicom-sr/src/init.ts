@@ -9,11 +9,10 @@ import {
   LengthTool,
   PlanarFreehandROITool,
   RectangleROITool,
-  utilities as csToolsUtils,
 } from '@cornerstonejs/tools';
-import { Types, MeasurementService } from '@ohif/core';
-import { StackViewport, utilities as csUtils } from '@cornerstonejs/core';
+import { Types } from '@ohif/core';
 import { Enums as CSExtensionEnums } from '@ohif/extension-cornerstone';
+
 import DICOMSRDisplayTool from './tools/DICOMSRDisplayTool';
 import SCOORD3DPointTool from './tools/SCOORD3DPointTool';
 import SRSCOOR3DProbeMapper from './utils/SRSCOOR3DProbeMapper';
@@ -29,7 +28,7 @@ export default function init({
   configuration = {},
   servicesManager,
 }: Types.Extensions.ExtensionParams): void {
-  const { measurementService, cornerstoneViewportService } = servicesManager.services;
+  const { measurementService } = servicesManager.services;
 
   addToolInstance(toolNames.DICOMSRDisplay, DICOMSRDisplayTool);
   addToolInstance(toolNames.SRLength, LengthTool);
@@ -57,7 +56,7 @@ export default function init({
     'SRSCOORD3DPoint',
     POINT,
     SRSCOOR3DProbeMapper.toAnnotation,
-    SRSCOOR3DProbeMapper.toMeasurement
+    SRSCOOR3DProbeMapper.toMeasurement.bind(null, { servicesManager })
   );
 
   // Modify annotation tools to use dashed lines on SR

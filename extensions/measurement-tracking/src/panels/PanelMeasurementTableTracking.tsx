@@ -13,7 +13,7 @@ import {
 import { useTrackedMeasurements } from '../getContextModule';
 import { UntrackSeriesModal } from './PanelStudyBrowserTracking/untrackSeriesModal';
 
-const { filterAnd, filterPlanarMeasurement, filterMeasurementsBySeriesUID } =
+const { filterMeasurementsBySeriesUID, filterAny } =
   utils.MeasurementFilters;
 
 function PanelMeasurementTableTracking(props) {
@@ -24,8 +24,8 @@ function PanelMeasurementTableTracking(props) {
   const [trackedMeasurements, sendTrackedMeasurementsEvent] = useTrackedMeasurements();
   const { trackedStudy, trackedSeries } = trackedMeasurements.context;
   const measurementFilter = trackedStudy
-    ? filterAnd(filterPlanarMeasurement, filterMeasurementsBySeriesUID(trackedSeries))
-    : filterPlanarMeasurement;
+    ? filterMeasurementsBySeriesUID(trackedSeries)
+    : filterAny;
 
   const onUntrackConfirm = () => {
     sendTrackedMeasurementsEvent('UNTRACK_ALL', {});

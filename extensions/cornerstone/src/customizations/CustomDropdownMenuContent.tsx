@@ -17,7 +17,7 @@ import { ExportSegmentationSubMenuItem } from '../components/ExportSegmentationS
  */
 export const CustomDropdownMenuContent = () => {
   const { commandsManager } = useSystem();
-  const { t } = useTranslation('SegmentationTable');
+  const { t } = useTranslation('SegmentationPanel');
   const {
     onSegmentationAdd,
     onSegmentationRemoveFromViewport,
@@ -26,7 +26,7 @@ export const CustomDropdownMenuContent = () => {
     exportOptions,
     activeSegmentation,
     activeSegmentationId,
-    segmentationRepresentationType,
+    segmentationRepresentationTypes,
     disableEditing,
   } = useSegmentationTableContext('CustomDropdownMenu');
 
@@ -46,29 +46,23 @@ export const CustomDropdownMenuContent = () => {
     segmentationId = activeSegmentationId;
   }
 
-  // Determine if export is allowed for this segmentation
-  if (exportOptions && segmentationId) {
-    const exportOption = exportOptions.find(opt => opt.segmentationId === segmentationId);
-    allowExport = exportOption?.isExportable || false;
-  }
-
   if (!segmentation || !segmentationId) {
     return null;
   }
 
+  // Determine if export is allowed for this segmentation
+  if (exportOptions) {
+    const exportOption = exportOptions.find(opt => opt.segmentationId === segmentationId);
+    allowExport = exportOption?.isExportable || false;
+  }
+
   const actions = {
-    storeSegmentation: async segmentationId => {
+    storeSegmentation: async (segmentationId, modality = 'SEG') => {
       commandsManager.run({
         commandName: 'storeSegmentation',
-        commandOptions: { segmentationId },
+        commandOptions: { segmentationId, modality },
         context: 'CORNERSTONE',
       });
-    },
-    onSegmentationDownloadRTSS: segmentationId => {
-      commandsManager.run('downloadRTSS', { segmentationId });
-    },
-    onSegmentationDownload: segmentationId => {
-      commandsManager.run('downloadSegmentation', { segmentationId });
     },
     downloadCSVSegmentationReport: segmentationId => {
       commandsManager.run('downloadCSVSegmentationReport', { segmentationId });
@@ -79,7 +73,12 @@ export const CustomDropdownMenuContent = () => {
     <DropdownMenuContent align="start">
       {!disableEditing && (
         <DropdownMenuItem
-          onClick={() => onSegmentationAdd({ segmentationId, segmentationRepresentationType })}
+          onClick={() =>
+            onSegmentationAdd({
+              segmentationId,
+              segmentationRepresentationType: segmentationRepresentationTypes?.[0],
+            })
+          }
         >
           <Icons.Add className="text-foreground" />
           <span className="pl-2">{t('Create New Segmentation')}</span>
@@ -97,7 +96,7 @@ export const CustomDropdownMenuContent = () => {
       </DropdownMenuItem>
       <ExportSegmentationSubMenuItem
         segmentationId={segmentationId}
-        segmentationRepresentationType={segmentationRepresentationType}
+        segmentationRepresentationType={segmentationRepresentationTypes?.[0]}
         allowExport={allowExport}
         actions={actions}
       />

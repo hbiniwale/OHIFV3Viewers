@@ -32,6 +32,12 @@ const screenShotPaths = {
     globalUnlockedSegPreEdit: 'unlockedSegPreEdit.png',
     globalUnlockedSegPostEdit: 'unlockedSegPostEdit.png',
   },
+  labelMapSegmentationColorChange: {
+    colorBeforeChange: 'labelMapSegmentationColor-beforeChange.png',
+    colorAfterChange: 'labelMapSegmentationColor-afterChange.png',
+    colorBeforeCancel: 'labelMapSegmentationColor-beforeCancel.png',
+    colorAfterCancel: 'labelMapSegmentationColor-afterCancel.png',
+  },
   length: {
     lengthDisplayedCorrectly: 'lengthDisplayedCorrectly.png',
   },
@@ -66,6 +72,18 @@ const screenShotPaths = {
   rectangle: {
     rectangleDisplayedCorrectly: 'rectangleDisplayedCorrectly.png',
   },
+  scoord3dProbe: {
+    scoord3dProbeDisplayedCorrectly: 'scoord3dProbeDisplayedCorrectly.png',
+    scoord3dProbePreHydration: 'scoord3dProbePreHydration.png',
+    scoord3dProbePostHydration: 'scoord3dProbePostHydration.png',
+    scoord3dProbeJumpToMeasurement: 'scoord3dProbeJumpToMeasurement.png',
+  },
+  scoordRectangle: {
+    scoordRectangleDisplayedCorrectly: 'scoordRectangleDisplayedCorrectly.png',
+    scoordRectanglePreHydration: 'scoordRectanglePreHydration.png',
+    scoordRectanglePostHydration: 'scoordRectanglePostHydration.png',
+    scoordRectangleJumpToMeasurement: 'scoordRectangleJumpToMeasurement.png',
+  },
   spline: {
     splineDisplayedCorrectly: 'splineDisplayedCorrectly.png',
   },
@@ -84,6 +102,9 @@ const screenShotPaths = {
   },
   reset: {
     resetDisplayedCorrectly: 'resetDisplayedCorrectly.png',
+  },
+  zoomIn: {
+    magnifyViewportDisplayedCorrectly: 'magnifyViewportDisplayedCorrectly.png',
   },
   rtDataOverlayForUnreferencedDisplaySetNoHydration: {
     overlayFirstImage: 'overlayFirstImage.png',
@@ -117,6 +138,10 @@ const screenShotPaths = {
     segPreHydration: 'segPreHydration.png',
     segJumpToSegment: 'segJumpToSegment.png',
   },
+  segHydrationDeleteAndReload: {
+    viewportAfterSecondHydration: 'viewportAfterSecondHydration.png',
+    viewportAfterSecondDelete: 'viewportAfterSecondDelete.png',
+  },
   segHydrationThenMPR: {
     segPostHydration: 'segPostHydration.png',
     segPostHydrationMPRAxialPrimary: 'segPostHydrationMPRAxialPrimary.png',
@@ -132,6 +157,10 @@ const screenShotPaths = {
     threeDFourUpAfterSEG: 'threeDFourUpAfterSEG.png',
     threeDFourUpAfterSegHydrated: 'threeDFourUpAfterSegHydrated.png',
   },
+  segHydrationAfterLayoutSwitchTo3By2: {
+    afterSEGHydrated: 'afterSEGHydrated.png',
+    backTo3DFourUp: 'backTo3DFourUp.png',
+  },
   segNoHydrationThenMPR: {
     segNoHydrationPreMPR: 'segNoHydrationPreMpr.png',
     segNoHydrationPostMPR: 'segNoHydrationPostMpr.png',
@@ -143,6 +172,10 @@ const screenShotPaths = {
   segDataOverlayNoHydrationThenMPR: {
     segDataOverlayNoHydrationPreMPR: 'segDataOverlayNoHydrationPreMpr.png',
     segDataOverlayNoHydrationPostMPR: 'segDataOverlayNoHydrationPostMpr.png',
+  },
+  segDrawingToolsResizing: {
+    brushTool: 'brushTool.png',
+    eraserTool: 'eraserTool.png',
   },
   mprThenRTOverlayNoHydration: {
     mprPreRTOverlayNoHydration: 'mprPreRTOverlayNoHydration.png',
@@ -161,12 +194,11 @@ const screenShotPaths = {
     rtPostHydration: 'rtPostHydration.png',
     rtPreHydration: 'rtPreHydration.png',
   },
-  crosshairs: {
-    crosshairsRendered: 'crosshairsRendered.png',
-    crosshairsRotated: 'crosshairsRotated.png',
-    crosshairsSlabThickness: 'crosshairsSlabThickness.png',
-    crosshairsResetToolbar: 'crosshairsResetToolbar.png',
-    crosshairsNewDisplayset: 'crosshairsNewDisplayset.png',
+  rtHydrationDisableConfirmation: {
+    firstLoadPostHydration: 'firstLoadPostHydration.png',
+    viewportAfterFirstDelete: 'viewportAfterFirstDelete.png',
+    secondLoadPostHydration: 'secondLoadPostHydration.png',
+    viewportAfterSecondDelete: 'viewportAfterSecondDelete.png',
   },
   tmtvRendering: {
     tmtvDisplayedCorrectly: 'tmtvDisplayedCorrectly.png',
@@ -195,8 +227,18 @@ const screenShotPaths = {
     overlaysDisplayed: 'overlaysDisplayed.png',
     overlaySEGsAndRTDisplayed: 'overlaySEGsAndRTDisplayed.png',
   },
+  overlappingSegmentationRendering: {
+    overlappingSegmentsDisplayed: 'overlappingSegmentsDisplayed.png',
+  },
+  contourCombineOperations: {
+    subtractBigSphereMinusSmallSphereResult: 'subtractBigSphereMinusSmallSphereResult.png',
+    intersectBigSphereSmallSphereResult: 'intersectBigSphereSmallSphereResult.png',
+  },
   workList: {
     scrollBarRenderedProperly: 'scrollBarRenderedProperly.png',
+  },
+  wsi: {
+    wsiDisplayedCorrectly: 'wsiDisplayedCorrectly.png',
   },
 };
 

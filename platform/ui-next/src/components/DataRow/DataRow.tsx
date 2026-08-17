@@ -9,6 +9,7 @@ import {
 import { Icons } from '../../components/Icons/Icons';
 import { Tooltip, TooltipTrigger, TooltipContent } from '../../components/Tooltip/Tooltip';
 import { cn } from '../../lib/utils';
+import { useTranslation } from 'react-i18next';
 
 /**
  * DataRow is a complex UI component that displays a selectable, interactive row with hierarchical data.
@@ -135,6 +136,7 @@ const DataRowComponent = React.forwardRef<HTMLDivElement, DataRowProps>(
     },
     ref
   ) => {
+    const { t } = useTranslation('DataRow');
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const isTitleLong = title?.length > 25;
 
@@ -180,6 +182,7 @@ const DataRowComponent = React.forwardRef<HTMLDivElement, DataRowProps>(
           <div
             key={`empty-${indent}`}
             className="h-2"
+            data-cy="data-row-detail-line-empty"
           ></div>
         );
       }
@@ -188,6 +191,7 @@ const DataRowComponent = React.forwardRef<HTMLDivElement, DataRowProps>(
         <div
           key={cleanText}
           className="whitespace-pre-wrap"
+          data-cy="data-row-detail-line"
         >
           {indentation}
           <span className="font-medium">{cleanText}</span>
@@ -195,14 +199,17 @@ const DataRowComponent = React.forwardRef<HTMLDivElement, DataRowProps>(
       );
     };
 
-    const renderDetails = (details: string[]) => {
+    const renderDetails = (details: string[], variant: 'primary' | 'secondary') => {
       const visibleLines = details.slice(0, 4);
       const hiddenLines = details.slice(4);
 
       return (
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="cursor-help">
+            <div
+              className="cursor-help"
+              data-cy={`data-row-details-${variant}`}
+            >
               <div className="flex flex-col space-y-1">
                 {visibleLines.map((line, lineIndex) =>
                   renderDetailText(line, line.startsWith('  ') ? 1 : 0)
@@ -253,7 +260,7 @@ const DataRowComponent = React.forwardRef<HTMLDivElement, DataRowProps>(
           {/* Number Box */}
           {number !== null && (
             <div
-              className={`flex h-7 max-h-7 w-7 flex-shrink-0 items-center justify-center rounded-l border-r border-black text-base ${
+              className={`flex h-7 max-h-7 w-7 flex-shrink-0 items-center justify-center rounded-l border-r border-background text-base ${
                 isSelected ? 'bg-highlight text-black' : 'bg-muted text-muted-foreground'
               } overflow-hidden`}
             >
@@ -268,6 +275,7 @@ const DataRowComponent = React.forwardRef<HTMLDivElement, DataRowProps>(
               <span
                 className="ml-2 h-2 w-2 rounded-full"
                 style={{ backgroundColor: colorHex }}
+                data-cy="data-row-colorhex"
               ></span>
             </div>
           )}
@@ -278,6 +286,7 @@ const DataRowComponent = React.forwardRef<HTMLDivElement, DataRowProps>(
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span
+                    data-cy="data-row-title"
                     className={`cursor-default text-base ${
                       isSelected ? 'text-highlight' : 'text-muted-foreground'
                     } [overflow:hidden] [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical]`}
@@ -294,6 +303,7 @@ const DataRowComponent = React.forwardRef<HTMLDivElement, DataRowProps>(
               </Tooltip>
             ) : (
               <span
+                data-cy="data-row-title"
                 className={`text-base ${
                   isSelected ? 'text-highlight' : 'text-muted-foreground'
                 } [overflow:hidden] [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical]`}
@@ -312,7 +322,8 @@ const DataRowComponent = React.forwardRef<HTMLDivElement, DataRowProps>(
               className={`h-6 w-6 transition-opacity ${
                 isSelected || !isVisible ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
               }`}
-              aria-label={isVisible ? 'Hide' : 'Show'}
+              aria-label={isVisible ? t('Hide') : t('Show')}
+              dataCY="data-row-visibility-toggle"
               onClick={e => {
                 e.stopPropagation();
                 onToggleVisibility(e);
@@ -361,7 +372,7 @@ const DataRowComponent = React.forwardRef<HTMLDivElement, DataRowProps>(
                         className="pl-2"
                         data-cy="Rename"
                       >
-                        Rename
+                        {t('Rename')}
                       </span>
                     </DropdownMenuItem>
                     {onCopy && (
@@ -371,7 +382,7 @@ const DataRowComponent = React.forwardRef<HTMLDivElement, DataRowProps>(
                           className="pl-2"
                           data-cy="Duplicate"
                         >
-                          Duplicate
+                          {t('Duplicate')}
                         </span>
                       </DropdownMenuItem>
                     )}
@@ -381,7 +392,7 @@ const DataRowComponent = React.forwardRef<HTMLDivElement, DataRowProps>(
                         className="pl-2"
                         data-cy="Delete"
                       >
-                        Delete
+                        {t('Delete')}
                       </span>
                     </DropdownMenuItem>
                     {onColor && (
@@ -391,7 +402,7 @@ const DataRowComponent = React.forwardRef<HTMLDivElement, DataRowProps>(
                           className="pl-2"
                           data-cy="Change Color"
                         >
-                          Change Color
+                          {t('Change Color')}
                         </span>
                       </DropdownMenuItem>
                     )}
@@ -401,7 +412,7 @@ const DataRowComponent = React.forwardRef<HTMLDivElement, DataRowProps>(
                         className="pl-2"
                         data-cy="LockToggle"
                       >
-                        {isLocked ? 'Unlock' : 'Lock'}
+                        {isLocked ? t('Unlock') : t('Lock')}
                       </span>
                     </DropdownMenuItem>
                   </>
@@ -413,12 +424,15 @@ const DataRowComponent = React.forwardRef<HTMLDivElement, DataRowProps>(
 
         {/* Details Section */}
         {details && (details.primary?.length > 0 || details.secondary?.length > 0) && (
-          <div className="ml-7 px-2 py-2">
+          <div
+            className="ml-7 px-2 py-2"
+            data-cy="data-row-details"
+          >
             <div className="text-secondary-foreground flex items-center gap-1 text-base leading-normal">
-              {details.primary?.length > 0 && renderDetails(details.primary)}
+              {details.primary?.length > 0 && renderDetails(details.primary, 'primary')}
               {details.secondary?.length > 0 && (
                 <div className="text-muted-foreground ml-auto text-sm">
-                  {renderDetails(details.secondary)}
+                  {renderDetails(details.secondary, 'secondary')}
                 </div>
               )}
             </div>
@@ -498,7 +512,7 @@ const StatusError: React.FC<{ tooltip?: string }> = ({ tooltip }) => (
 const StatusInfo: React.FC<{ tooltip?: string }> = ({ tooltip }) => (
   <StatusIndicator
     tooltip={tooltip}
-    icon={<Icons.Info className="h-4 w-4 text-blue-500" />}
+    icon={<Icons.Info className="text-primary h-4 w-4" />}
     defaultTooltip="Info"
   />
 );

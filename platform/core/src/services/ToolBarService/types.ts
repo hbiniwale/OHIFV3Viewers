@@ -36,10 +36,12 @@ export type ButtonOptions = {
   id: string;
   type: 'range' | 'radio' | 'double-range' | 'custom' | 'checkbox' | 'select' | 'button';
   name?: string;
+  tooltip?: string;
   min?: number;
   max?: number;
   step?: number;
   value?: number | number[] | string;
+  values: Array<{ value: string; label: string }>;
   commands?: RunCommand;
   condition?: (props: Record<string, unknown>) => boolean;
   children?: React.ReactNode | (() => React.ReactNode);
@@ -50,6 +52,7 @@ export type ButtonOptions = {
 export type ButtonProps = {
   id: string;
   icon: string;
+  isActive?: boolean;
   label: string;
   tooltip?: string;
   commands?: RunCommand;

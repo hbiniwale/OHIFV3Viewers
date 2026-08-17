@@ -1,3 +1,5 @@
+import { MIN_SEGMENTATION_DRAWING_RADIUS, MAX_SEGMENTATION_DRAWING_RADIUS } from './constants';
+
 const colours = {
   'viewport-0': 'rgb(200, 0, 0)',
   'viewport-1': 'rgb(200, 200, 0)',
@@ -32,6 +34,8 @@ function createTools({ utilityModule, commandsManager }) {
         parentTool: 'Brush',
         configuration: {
           activeStrategy: 'FILL_INSIDE_CIRCLE',
+          minRadius: MIN_SEGMENTATION_DRAWING_RADIUS,
+          maxRadius: MAX_SEGMENTATION_DRAWING_RADIUS,
         },
       },
       {
@@ -41,13 +45,15 @@ function createTools({ utilityModule, commandsManager }) {
         toolName: toolNames.MarkerLabelmap,
       },
       {
-        toolName: toolNames.RegionSegmentPlus,
+        toolName: toolNames.ClickSegment,
       },
       {
         toolName: 'CircularEraser',
         parentTool: 'Brush',
         configuration: {
           activeStrategy: 'ERASE_INSIDE_CIRCLE',
+          minRadius: MIN_SEGMENTATION_DRAWING_RADIUS,
+          maxRadius: MAX_SEGMENTATION_DRAWING_RADIUS,
         },
       },
       {
@@ -55,6 +61,8 @@ function createTools({ utilityModule, commandsManager }) {
         parentTool: 'Brush',
         configuration: {
           activeStrategy: 'FILL_INSIDE_SPHERE',
+          minRadius: MIN_SEGMENTATION_DRAWING_RADIUS,
+          maxRadius: MAX_SEGMENTATION_DRAWING_RADIUS,
         },
       },
       {
@@ -62,6 +70,8 @@ function createTools({ utilityModule, commandsManager }) {
         parentTool: 'Brush',
         configuration: {
           activeStrategy: 'ERASE_INSIDE_SPHERE',
+          minRadius: MIN_SEGMENTATION_DRAWING_RADIUS,
+          maxRadius: MAX_SEGMENTATION_DRAWING_RADIUS,
         },
       },
       {
@@ -69,6 +79,8 @@ function createTools({ utilityModule, commandsManager }) {
         parentTool: 'Brush',
         configuration: {
           activeStrategy: 'THRESHOLD_INSIDE_CIRCLE',
+          minRadius: MIN_SEGMENTATION_DRAWING_RADIUS,
+          maxRadius: MAX_SEGMENTATION_DRAWING_RADIUS,
         },
       },
       {
@@ -76,6 +88,8 @@ function createTools({ utilityModule, commandsManager }) {
         parentTool: 'Brush',
         configuration: {
           activeStrategy: 'THRESHOLD_INSIDE_SPHERE',
+          minRadius: MIN_SEGMENTATION_DRAWING_RADIUS,
+          maxRadius: MAX_SEGMENTATION_DRAWING_RADIUS,
         },
       },
       {
@@ -83,6 +97,8 @@ function createTools({ utilityModule, commandsManager }) {
         parentTool: 'Brush',
         configuration: {
           activeStrategy: 'THRESHOLD_INSIDE_CIRCLE',
+          minRadius: MIN_SEGMENTATION_DRAWING_RADIUS,
+          maxRadius: MAX_SEGMENTATION_DRAWING_RADIUS,
           threshold: {
             isDynamic: true,
             dynamicRadius: 3,
@@ -100,6 +116,8 @@ function createTools({ utilityModule, commandsManager }) {
         parentTool: 'Brush',
         configuration: {
           activeStrategy: 'THRESHOLD_INSIDE_SPHERE',
+          minRadius: MIN_SEGMENTATION_DRAWING_RADIUS,
+          maxRadius: MAX_SEGMENTATION_DRAWING_RADIUS,
           threshold: {
             isDynamic: true,
             dynamicRadius: 3,
@@ -180,6 +198,18 @@ function initMPRToolGroup(extensionManager, toolGroupService, commandsManager) {
   tools.disabled.push(
     {
       toolName: utilityModule.exports.toolNames.Crosshairs,
+      // Bind Crosshairs to Primary+Shift (matching the longitudinal/tmtv modes)
+      // so it lives on its own mouse binding. Without a binding it activates on
+      // plain Primary and, being `disableOnPassive`, gets disabled the moment
+      // another Primary tool (brush/zoom/pan, all in this `mpr` group) is
+      // activated from the toolbar — making Crosshairs mutually exclusive with
+      // them. On its own binding it stays active alongside those tools.
+      bindings: [
+        {
+          mouseButton: utilityModule.exports.Enums.MouseBindings.Primary,
+          modifierKey: utilityModule.exports.Enums.KeyboardBindings.Shift,
+        },
+      ],
       configuration: {
         viewportIndicators: true,
         viewportIndicatorsConfig: {
@@ -240,7 +270,7 @@ function initVolume3DToolGroup(extensionManager, toolGroupService) {
   toolGroupService.createToolGroupAndAddTools('volume3d', tools);
 }
 
-function initToolGroups(extensionManager, toolGroupService, commandsManager) {
+function initToolGroups({ extensionManager, toolGroupService, commandsManager }) {
   initDefaultToolGroup(extensionManager, toolGroupService, commandsManager, 'default');
   initMPRToolGroup(extensionManager, toolGroupService, commandsManager);
   initVolume3DToolGroup(extensionManager, toolGroupService);

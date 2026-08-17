@@ -8,10 +8,9 @@ import { defaultActionIcons } from './constants';
 import MoreDropdownMenu from '../../Components/MoreDropdownMenu';
 import { CallbackCustomization } from 'platform/core/src/types';
 import { type TabsProps } from '@ohif/core/src/utils/createStudyBrowserTabs';
+import { thumbnailNoImageModalities } from '@ohif/core/src/utils/thumbnailNoImageModalities';
 
 const { sortStudyInstances, formatDate, createStudyBrowserTabs } = utils;
-
-const thumbnailNoImageModalities = ['SR', 'SEG', 'RTSTRUCT', 'RTPLAN', 'RTDOSE', 'DOC', 'PMAP'];
 
 /**
  * Study Browser component that displays and manages studies and their display sets
@@ -28,7 +27,8 @@ function PanelStudyBrowser({
   const { servicesManager, commandsManager, extensionManager } = useSystem();
   const { displaySetService, customizationService } = servicesManager.services;
   const navigate = useNavigate();
-  const studyMode = (customizationService.getCustomization('studyBrowser.studyMode') as string) || 'all';
+  const studyMode =
+    (customizationService.getCustomization('studyBrowser.studyMode') as string) || 'all';
 
   const internalImageViewer = useImageViewer();
   const StudyInstanceUIDs = internalImageViewer.StudyInstanceUIDs;
@@ -86,7 +86,7 @@ function PanelStudyBrowser({
         commandsManager,
         servicesManager,
         isHangingProtocolLayout,
-        appConfig: extensionManager._appConfig,
+        appConfig: extensionManager.appConfig,
       };
 
       const handlers = customHandler?.callbacks.map(callback => callback(setupArgs));
@@ -120,11 +120,6 @@ function PanelStudyBrowser({
       const qidoForStudyUID = await dataSource.query.studies.search({
         studyInstanceUid: StudyInstanceUID,
       });
-
-      if (!qidoForStudyUID?.length) {
-        navigate('/notfoundstudy', '_self');
-        throw new Error('Invalid study URL');
-      }
 
       let qidoStudiesForPatient = qidoForStudyUID;
 
@@ -384,7 +379,11 @@ function PanelStudyBrowser({
 
     const displaySetInstanceUID = jumpToDisplaySet;
     // It is possible to navigate to a study not currently in view
-    const thumbnailLocation = _findTabAndStudyOfDisplaySet(displaySetInstanceUID, tabs, activeTabName);
+    const thumbnailLocation = _findTabAndStudyOfDisplaySet(
+      displaySetInstanceUID,
+      tabs,
+      activeTabName
+    );
     if (!thumbnailLocation) {
       return;
     }
@@ -410,7 +409,7 @@ function PanelStudyBrowser({
         />
         <Separator
           orientation="horizontal"
-          className="bg-black"
+          className="bg-background"
           thickness="2px"
         />
       </>
@@ -489,7 +488,7 @@ function _mapDisplaySets(displaySets, displaySetLoadingState, thumbnailImageSrcM
         seriesNumber: ds.SeriesNumber,
         modality: ds.Modality,
         seriesDate: formatDate(ds.SeriesDate),
-        numInstances: ds.numImageFrames,
+        numInstances: ds.numImageFrames ?? ds.instances?.length,
         loadingProgress,
         countIcon: ds.countIcon,
         messages: ds.messages,
@@ -538,11 +537,13 @@ function _findTabAndStudyOfDisplaySet(
   tabs: TabsProps,
   currentTabName: string
 ) {
-  const current = tabs.find(tab => tab.name===currentTabName) || tabs[0];
+  const current = tabs.find(tab => tab.name === currentTabName) || tabs[0];
   const biasedTabs = [current, ...tabs];
 
   for (let t = 0; t < biasedTabs.length; t++) {
-    const study = biasedTabs[t].studies.find(study => study.displaySets.find(ds => ds.displaySetInstanceUID ===displaySetInstanceUID));
+    const study = biasedTabs[t].studies.find(study =>
+      study.displaySets.find(ds => ds.displaySetInstanceUID === displaySetInstanceUID)
+    );
     if (study) {
       return {
         tabName: biasedTabs[t].name,
